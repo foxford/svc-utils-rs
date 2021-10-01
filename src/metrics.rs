@@ -2,11 +2,7 @@ use std::convert::Infallible;
 use std::net::SocketAddr;
 use std::time::Duration;
 
-use axum::{
-    extract, handler,
-    routing::{EmptyRouter, Router},
-    AddExtensionLayer, Server,
-};
+use axum::{AddExtensionLayer, Server, extract, handler, routing::{BoxRoute, EmptyRouter, Router}};
 use hyper::{Body, Request, Response};
 use prometheus::{Encoder, Registry, TextEncoder};
 use tokio::sync::oneshot;
@@ -24,20 +20,39 @@ pub struct MetricsServer {
 }
 
 impl MetricsServer {
-    /// Create new server. This will spawn a new tokio task.
+    /// Create new server with prometheus default registry. This will spawn a new tokio task.
     ///
     /// # Arguments
     ///
     /// * `registry` - prometheus registry to gather metrics from
     /// * `bind_addr` - address to bind server to
-    pub fn new(registry: Registry, bind_addr: SocketAddr) -> Self {
-        let (closer, rx) = oneshot::channel::<()>();
+    pub fn new(bind_addr: SocketAddr) -> Self {
+        let app = Router::new()
+            .route("/metrics", handler::get(metrics_handler))
+            .boxed();
 
+        Self::new_(app, bind_addr)
+    }
+
+    /// Create new server with a given registry. This will spawn a new tokio task.
+    ///
+    /// # Arguments
+    ///
+    /// * `registry` - prometheus registry to gather metrics from
+    /// * `bind_addr` - address to bind server to
+    pub fn new_with_registry(registry: Registry, bind_addr: SocketAddr) -> Self {
         let app: Router<EmptyRouter<Infallible>> = Router::new();
 
         let app = app
-            .route("/metrics", handler::get(metrics_handler))
+            .route("/metrics", handler::get(metrics_handler_with_registry))
             .layer(AddExtensionLayer::new(registry))
+            .boxed();
+
+        Self::new_(app, bind_addr)
+    }
+
+    fn new_(app: Router<BoxRoute>, bind_addr: SocketAddr) -> Self {
+        let app = app
             .layer(
                 TraceLayer::new_for_http()
                     .make_span_with(|request: &Request<_>| {
@@ -60,6 +75,8 @@ impl MetricsServer {
                         info!("response generated in {:?}", latency)
                     }),
             );
+
+        let (closer, rx) = oneshot::channel::<()>();
 
         let join_handle = tokio::task::spawn(async move {
             Server::bind(&bind_addr)
@@ -97,7 +114,22 @@ impl MetricsServer {
     }
 }
 
-async fn metrics_handler(state: extract::Extension<Registry>) -> Response<Body> {
+async fn metrics_handler() -> Response<Body> {
+    let mut buffer = vec![];
+    let encoder = TextEncoder::new();
+    let metric_families = prometheus::gather();
+    let response = match encoder.encode(&metric_families, &mut buffer) {
+        Ok(_) => Response::builder().status(200).body(buffer.into()).unwrap(),
+        Err(err) => {
+            warn!("Metrics not gathered: {:?}", err);
+            Response::builder().status(500).body(vec![].into()).unwrap()
+        }
+    };
+    response
+}
+
+
+async fn metrics_handler_with_registry(state: extract::Extension<Registry>) -> Response<Body> {
     let registry = state.0;
     let mut buffer = vec![];
     let encoder = TextEncoder::new();

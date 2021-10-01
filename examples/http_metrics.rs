@@ -45,7 +45,7 @@ async fn main() {
 
     let shared_state = Arc::new(State(counter, gauge));
 
-    let metrics_server = MetricsServer::new(r, "0.0.0.0:8081".parse().unwrap());
+    let metrics_server = MetricsServer::new_with_registry(r, "0.0.0.0:8081".parse().unwrap());
 
     let app = Router::new()
         .route("/", get(root))
