@@ -1,5 +1,5 @@
 [package]
-name = "foxford-ulms-svc-utils"
+name = "svc-utils"
 version = "0.1.0"
 edition = "2018"
 

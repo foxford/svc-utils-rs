@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use axum::{extract, handler::get, AddExtensionLayer, Router};
-use foxford_ulms_svc_utils::metrics::MetricsServer;
+use svc_utils::metrics::MetricsServer;
 use futures::StreamExt;
 use prometheus::{IntCounter, IntGauge, Opts, Registry};
 use signal_hook::consts::TERM_SIGNALS;
