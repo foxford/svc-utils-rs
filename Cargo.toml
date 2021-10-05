@@ -2,6 +2,10 @@
 name = "svc-utils"
 version = "0.1.0"
 edition = "2018"
+license = "MIT"
+documentation = "https://docs.rs/svc-utils"
+repository = "https://github.com/foxford/svc-utils-rs"
+description = "Bunch of reusable utilities"
 
 [dependencies]
 axum = "0.2"
