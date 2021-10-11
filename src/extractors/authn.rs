@@ -1,5 +1,3 @@
-use std::marker::PhantomData;
-
 use axum::{
     async_trait,
     extract::{FromRequest, RequestParts},
@@ -9,25 +7,18 @@ use svc_agent::{AccountId, AgentId};
 use svc_authn::jose::ConfigMap as AuthnConfig;
 use svc_authn::token::jws_compact::extract::decode_jws_compact_with_config;
 
-pub struct Extractor<C: HasAuthnConfig + Send + Sync + 'static>(pub AgentId, PhantomData<C>);
-
-pub trait HasAuthnConfig {
-    fn authn(&self) -> &AuthnConfig;
-}
+pub struct Extractor(pub AgentId);
 
 #[async_trait]
-impl<C> FromRequest for Extractor<C>
-where
-    C: HasAuthnConfig + Send + Sync + 'static,
-{
+impl FromRequest for Extractor {
     type Rejection = (StatusCode, &'static str);
 
     async fn from_request(req: &mut RequestParts) -> Result<Self, Self::Rejection> {
         let ctx = req
             .extensions()
-            .and_then(|x| x.get::<C>())
+            .and_then(|x| x.get::<AuthnConfig>())
             .ok_or_else(|| (StatusCode::UNAUTHORIZED, "No authn config"))
-            .expect("Context must present");
+            .expect("AuthnConfig must be present");
 
         let auth_header = req
             .headers()
@@ -41,6 +32,6 @@ where
             .claims;
         let account = AccountId::new(claims.subject(), claims.audience());
         let agent_id = AgentId::new("http", account);
-        Ok(Extractor(agent_id, PhantomData))
+        Ok(Extractor(agent_id))
     }
 }
