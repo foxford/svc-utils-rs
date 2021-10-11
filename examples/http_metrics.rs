@@ -1,10 +1,10 @@
 use std::sync::Arc;
 
 use axum::{extract, handler::get, AddExtensionLayer, Router};
-use svc_utils::metrics::MetricsServer;
 use futures::StreamExt;
 use prometheus::{IntCounter, IntGauge, Opts, Registry};
 use signal_hook::consts::TERM_SIGNALS;
+use svc_utils::metrics::MetricsServer;
 
 // Simple http server that collects two metrics (requests counter and inc - dec requests gauge) and three routes:
 //      /     - increases counter

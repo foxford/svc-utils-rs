@@ -7,13 +7,19 @@ documentation = "https://docs.rs/svc-utils"
 repository = "https://github.com/foxford/svc-utils-rs"
 description = "Bunch of reusable utilities"
 
+[features]
+authz-extractor = ["svc-agent"]
+
 [dependencies]
 axum = "0.2"
+http = "0.2"
 hyper = { version = "0.14", features = ["server"] }
 prometheus = "0.13"
 tokio = { version = "1", features = ["sync"] }
 tower-http = { version = "0.1", features = ["trace"] }
 tracing = "0.1"
+svc-authn = { version = "0.7", features = ["jose"], optional = true }
+svc-agent = { version = "0.19.4", optional = true }
 
 [dev-dependencies]
 futures = "0.3"
