@@ -2,7 +2,11 @@ use std::convert::Infallible;
 use std::net::SocketAddr;
 use std::time::Duration;
 
-use axum::{AddExtensionLayer, Server, extract, handler, routing::{BoxRoute, EmptyRouter, Router}};
+use axum::{
+    extract, handler,
+    routing::{BoxRoute, EmptyRouter, Router},
+    AddExtensionLayer, Server,
+};
 use hyper::{Body, Request, Response};
 use prometheus::{Encoder, Registry, TextEncoder};
 use tokio::sync::oneshot;
@@ -52,29 +56,28 @@ impl MetricsServer {
     }
 
     fn new_(app: Router<BoxRoute>, bind_addr: SocketAddr) -> Self {
-        let app = app
-            .layer(
-                TraceLayer::new_for_http()
-                    .make_span_with(|request: &Request<_>| {
-                        // TODO: Option will be recorded simpler
-                        // when https://github.com/tokio-rs/tracing/pull/1393 lands
+        let app = app.layer(
+            TraceLayer::new_for_http()
+                .make_span_with(|request: &Request<_>| {
+                    // TODO: Option will be recorded simpler
+                    // when https://github.com/tokio-rs/tracing/pull/1393 lands
 
-                        let span = tracing::info_span!(
-                            "http-metrics-request",
-                            status_code = Empty,
-                            path = request.uri().path(),
-                            query = Empty
-                        );
-                        if let Some(query) = request.uri().query() {
-                            span.record("query", &query);
-                        }
-                        span
-                    })
-                    .on_response(|response: &Response<_>, latency: Duration, span: &Span| {
-                        span.record("status_code", &tracing::field::display(response.status()));
-                        info!("response generated in {:?}", latency)
-                    }),
-            );
+                    let span = tracing::info_span!(
+                        "http-metrics-request",
+                        status_code = Empty,
+                        path = request.uri().path(),
+                        query = Empty
+                    );
+                    if let Some(query) = request.uri().query() {
+                        span.record("query", &query);
+                    }
+                    span
+                })
+                .on_response(|response: &Response<_>, latency: Duration, span: &Span| {
+                    span.record("status_code", &tracing::field::display(response.status()));
+                    info!("response generated in {:?}", latency)
+                }),
+        );
 
         let (closer, rx) = oneshot::channel::<()>();
 
@@ -127,7 +130,6 @@ async fn metrics_handler() -> Response<Body> {
     };
     response
 }
-
 
 async fn metrics_handler_with_registry(state: extract::Extension<Registry>) -> Response<Body> {
     let registry = state.0;
