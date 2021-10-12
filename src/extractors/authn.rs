@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use axum::{
     async_trait,
     extract::{FromRequest, RequestParts},
@@ -14,9 +16,9 @@ impl FromRequest for Extractor {
     type Rejection = (StatusCode, &'static str);
 
     async fn from_request(req: &mut RequestParts) -> Result<Self, Self::Rejection> {
-        let ctx = req
+        let authn = req
             .extensions()
-            .and_then(|x| x.get::<AuthnConfig>())
+            .and_then(|x| x.get::<Arc<AuthnConfig>>())
             .ok_or_else(|| (StatusCode::UNAUTHORIZED, "No authn config"))
             .expect("AuthnConfig must be present");
 
@@ -27,7 +29,7 @@ impl FromRequest for Extractor {
             .and_then(|x| x.get("Bearer ".len()..))
             .ok_or_else(|| (StatusCode::UNAUTHORIZED, "Invalid authentication"))?;
 
-        let claims = decode_jws_compact_with_config::<String>(auth_header, &ctx.authn())
+        let claims = decode_jws_compact_with_config::<String>(auth_header, &authn)
             .map_err(|_| (StatusCode::UNAUTHORIZED, "Invalid authentication"))?
             .claims;
         let account = AccountId::new(claims.subject(), claims.audience());

@@ -8,7 +8,7 @@ repository = "https://github.com/foxford/svc-utils-rs"
 description = "Bunch of reusable utilities"
 
 [features]
-authz-extractor = ["svc-agent"]
+authn-extractor = ["svc-authn", "svc-agent"]
 
 [dependencies]
 axum = "0.2"
