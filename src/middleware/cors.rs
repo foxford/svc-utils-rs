@@ -12,6 +12,8 @@ pub struct Middleware<S> {
 const ALLOWED_METHODS: HeaderValue = HeaderValue::from_static("GET, PUT, POST, PATCH, DELETE");
 const ALLOWED_ORIGIN: HeaderValue = HeaderValue::from_static("*");
 const ALLOWED_HEADERS: HeaderValue = HeaderValue::from_static("*");
+const ALLOW_CREDENTIALS: HeaderValue = HeaderValue::from_static("true");
+
 
 impl<S, ReqBody, ResBody> Service<Request<ReqBody>> for Middleware<S>
 where
@@ -40,6 +42,7 @@ where
             h.insert(header::ACCESS_CONTROL_ALLOW_METHODS, ALLOWED_METHODS);
             h.insert(header::ACCESS_CONTROL_ALLOW_ORIGIN, ALLOWED_ORIGIN);
             h.insert(header::ACCESS_CONTROL_ALLOW_HEADERS, ALLOWED_HEADERS);
+            h.insert(header::ACCESS_CONTROL_ALLOW_CREDENTIALS, ALLOW_CREDENTIALS);
             Ok(res)
         })
     }
