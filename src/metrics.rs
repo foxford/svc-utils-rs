@@ -1,10 +1,9 @@
-use std::convert::Infallible;
 use std::net::SocketAddr;
 use std::time::Duration;
 
 use axum::{
-    extract, handler,
-    routing::{BoxRoute, EmptyRouter, Router},
+    extract, routing,
+    routing::Router,
     AddExtensionLayer, Server,
 };
 use hyper::{Body, Request, Response};
@@ -32,8 +31,7 @@ impl MetricsServer {
     /// * `bind_addr` - address to bind server to
     pub fn new(bind_addr: SocketAddr) -> Self {
         let app = Router::new()
-            .route("/metrics", handler::get(metrics_handler))
-            .boxed();
+            .route("/metrics", routing::get(metrics_handler));
 
         Self::new_(app, bind_addr)
     }
@@ -45,17 +43,16 @@ impl MetricsServer {
     /// * `registry` - prometheus registry to gather metrics from
     /// * `bind_addr` - address to bind server to
     pub fn new_with_registry(registry: Registry, bind_addr: SocketAddr) -> Self {
-        let app: Router<EmptyRouter<Infallible>> = Router::new();
+        let app = Router::new();
 
         let app = app
-            .route("/metrics", handler::get(metrics_handler_with_registry))
-            .layer(AddExtensionLayer::new(registry))
-            .boxed();
+            .route("/metrics", routing::get(metrics_handler_with_registry))
+            .layer(AddExtensionLayer::new(registry));
 
         Self::new_(app, bind_addr)
     }
 
-    fn new_(app: Router<BoxRoute>, bind_addr: SocketAddr) -> Self {
+    fn new_(app: Router, bind_addr: SocketAddr) -> Self {
         let app = app.layer(
             TraceLayer::new_for_http()
                 .make_span_with(|request: &Request<_>| {

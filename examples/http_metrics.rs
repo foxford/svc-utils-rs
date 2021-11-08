@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use axum::{extract, handler::get, AddExtensionLayer, Router};
+use axum::{extract, routing::get, AddExtensionLayer, Router};
 use futures::StreamExt;
 use prometheus::{IntCounter, IntGauge, Opts, Registry};
 use signal_hook::consts::TERM_SIGNALS;
