@@ -1,11 +1,7 @@
 use std::net::SocketAddr;
 use std::time::Duration;
 
-use axum::{
-    extract, routing,
-    routing::Router,
-    AddExtensionLayer, Server,
-};
+use axum::{extract, routing, routing::Router, AddExtensionLayer, Server};
 use hyper::{Body, Request, Response};
 use prometheus::{Encoder, Registry, TextEncoder};
 use tokio::sync::oneshot;
@@ -30,8 +26,7 @@ impl MetricsServer {
     /// * `registry` - prometheus registry to gather metrics from
     /// * `bind_addr` - address to bind server to
     pub fn new(bind_addr: SocketAddr) -> Self {
-        let app = Router::new()
-            .route("/metrics", routing::get(metrics_handler));
+        let app = Router::new().route("/metrics", routing::get(metrics_handler));
 
         Self::new_(app, bind_addr)
     }

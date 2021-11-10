@@ -10,10 +10,11 @@ pub struct Middleware<S> {
 }
 
 const ALLOWED_METHODS: HeaderValue = HeaderValue::from_static("GET, PUT, POST, PATCH, DELETE");
-const ALLOWED_ORIGIN: HeaderValue = HeaderValue::from_static("*");
-const ALLOWED_HEADERS: HeaderValue = HeaderValue::from_static("*");
+const ALLOWED_HEADERS: HeaderValue = HeaderValue::from_static(
+    "authorization, ulms-app-audience, ulms-scope, ulms-app-version, ulms-app-label, content-type",
+);
 const ALLOW_CREDENTIALS: HeaderValue = HeaderValue::from_static("true");
-
+const MAX_AGE: HeaderValue = HeaderValue::from_static("3600");
 
 impl<S, ReqBody, ResBody> Service<Request<ReqBody>> for Middleware<S>
 where
@@ -33,6 +34,7 @@ where
     fn call(&mut self, req: Request<ReqBody>) -> Self::Future {
         // best practice is to clone the inner service like this
         // see https://github.com/tower-rs/tower/issues/547 for details
+        let origin = req.headers().get("Origin").map(ToOwned::to_owned);
         let clone = self.service.clone();
         let mut inner = std::mem::replace(&mut self.service, clone);
 
@@ -40,9 +42,12 @@ where
             let mut res: Response<ResBody> = inner.call(req).await?;
             let h = res.headers_mut();
             h.insert(header::ACCESS_CONTROL_ALLOW_METHODS, ALLOWED_METHODS);
-            h.insert(header::ACCESS_CONTROL_ALLOW_ORIGIN, ALLOWED_ORIGIN);
+            if let Some(origin) = origin {
+                h.insert(header::ACCESS_CONTROL_ALLOW_ORIGIN, origin);
+            }
             h.insert(header::ACCESS_CONTROL_ALLOW_HEADERS, ALLOWED_HEADERS);
             h.insert(header::ACCESS_CONTROL_ALLOW_CREDENTIALS, ALLOW_CREDENTIALS);
+            h.insert("Access-Control-Max-Age", MAX_AGE);
             Ok(res)
         })
     }
