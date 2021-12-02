@@ -10,6 +10,7 @@ description = "Bunch of reusable utilities"
 [features]
 authn-extractor = ["svc-authn", "svc-agent"]
 cors-middleware = []
+log-middleware = []
 
 [dependencies]
 axum = "0.3"
