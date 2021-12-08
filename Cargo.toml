@@ -17,7 +17,7 @@ axum = "0.3"
 futures = "0.3"
 http = "0.2"
 hyper = { version = "0.14.15", features = ["server"] }
-prometheus = "0.13"
+prometheus = { version = "0.13", default-features = false }
 tokio = { version = "1.14", features = ["sync"] }
 tower = "0.4"
 tower-http = { version = "0.2", features = ["trace"] }
