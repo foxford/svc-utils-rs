@@ -1,26 +1,28 @@
-use std::task::{Context, Poll};
 use std::collections::HashMap;
 use std::convert::{Infallible, TryFrom};
 use std::iter::FromIterator;
 use std::sync::Arc;
+use std::task::{Context, Poll};
 
+use axum::body::Body;
 use axum::routing::Router;
-use hyper::{Method, StatusCode};
-use once_cell::sync::{Lazy, OnceCell};
-use prometheus::{
-    register_histogram_vec, register_int_counter_vec, Histogram,
-    HistogramTimer, HistogramVec, IntCounter, IntCounterVec,
-};
-use tracing::error;
 use futures::future::BoxFuture;
 use hyper::Request;
 use hyper::Response;
+use hyper::{Method, StatusCode};
+use once_cell::sync::{Lazy, OnceCell};
+use prometheus::{
+    register_histogram_vec, register_int_counter_vec, Histogram, HistogramTimer, HistogramVec,
+    IntCounter, IntCounterVec,
+};
 use tower::{Layer, Service};
+use tracing::error;
 
 static METRICS: Lazy<Metrics> = Lazy::new(Metrics::new);
 
 struct Metrics {
     duration_vec: HistogramVec,
+    body_size_vec: HistogramVec,
     status_vec: IntCounterVec,
 }
 
@@ -30,6 +32,12 @@ impl Metrics {
             duration_vec: register_histogram_vec!(
                 "request_duration",
                 "Request duration",
+                &["path", "method"]
+            )
+            .expect("Can't create stats metrics"),
+            body_size_vec: register_histogram_vec!(
+                "request_body_size",
+                "Request body size",
                 &["path", "method"]
             )
             .expect("Can't create stats metrics"),
@@ -141,12 +149,11 @@ impl<S> MetricsMiddleware<S> {
     }
 }
 
-
 impl<S, ReqBody, ResBody> Service<Request<ReqBody>> for MetricsMiddleware<S>
 where
     S: Service<Request<ReqBody>, Response = Response<ResBody>> + Clone + Send + 'static,
     S::Future: Send + 'static,
-    ReqBody: Send + 'static,
+    ReqBody: hyper::body::HttpBody + Send + 'static,
     ResBody: Send + 'static,
 {
     type Response = S::Response;
@@ -163,10 +170,26 @@ where
         let clone = self.service.clone();
         let mut inner = std::mem::replace(&mut self.service, clone);
         let method = req.method().to_owned();
-        let timer = self.start_timer(method.clone());
 
         let path = self.path.clone();
         let counters = self.stats.clone();
+
+        if let Some(body_size) = req.body().size_hint().upper() {
+            match METRICS
+                .body_size_vec
+                .get_metric_with_label_values(&[&path, method.as_ref()])
+            {
+                Ok(m) => m.observe(body_size as f64),
+                Err(err) => error!(
+                    %path,
+                    %method,
+                    "Failed to record body size: {:?}", err
+                ),
+            }
+        }
+
+        let timer = self.start_timer(method.clone());
+
         Box::pin(async move {
             let res: Response<ResBody> = inner.call(req).await?;
             counters.inc_counter(method, res.status(), &path);
@@ -194,8 +217,6 @@ impl<S> Layer<S> for MetricsMiddlewareLayer {
         MetricsMiddleware::new(service, &self.path)
     }
 }
-
-use axum::body::Body;
 
 pub trait MeteredRoute<H>
 where
