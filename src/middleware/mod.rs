@@ -4,8 +4,14 @@ pub use cors::{Middleware as CorsMiddleware, MiddlewareLayer as CorsLayer};
 #[cfg(feature = "log-middleware")]
 pub use log::LogLayer;
 
+#[cfg(feature = "metrics-middleware")]
+pub use metrics::MeteredRoute;
+
 #[cfg(feature = "cors-middleware")]
 mod cors;
 
 #[cfg(feature = "log-middleware")]
 mod log;
+
+#[cfg(feature = "metrics-middleware")]
+mod metrics;
