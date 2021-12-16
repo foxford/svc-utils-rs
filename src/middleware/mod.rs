@@ -1,3 +1,6 @@
+#[cfg(feature = "body-limit-middleware")]
+pub use body_limit::BodyLimitLayer;
+
 #[cfg(feature = "cors-middleware")]
 pub use cors::{Middleware as CorsMiddleware, MiddlewareLayer as CorsLayer};
 
@@ -6,6 +9,9 @@ pub use log::LogLayer;
 
 #[cfg(feature = "metrics-middleware")]
 pub use metrics::MeteredRoute;
+
+#[cfg(feature = "body-limit-middleware")]
+mod body_limit;
 
 #[cfg(feature = "cors-middleware")]
 mod cors;

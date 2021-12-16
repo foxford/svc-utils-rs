@@ -9,6 +9,7 @@ description = "Bunch of reusable utilities"
 
 [features]
 authn-extractor = ["svc-authn", "svc-agent"]
+body-limit-middleware = []
 cors-middleware = []
 log-middleware = []
 metrics-middleware = ["once_cell"]
