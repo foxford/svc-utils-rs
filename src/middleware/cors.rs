@@ -1,7 +1,8 @@
+use std::task::{Context, Poll};
+
 use futures::future::BoxFuture;
 use http::{header, HeaderValue};
 use hyper::{Request, Response};
-use std::task::{Context, Poll};
 use tower::{Layer, Service};
 
 #[derive(Clone)]
