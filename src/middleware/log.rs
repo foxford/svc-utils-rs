@@ -49,6 +49,7 @@ impl MakeSpan<Body> for SpanMaker {
             query = request.uri().query(),
             method = %request.method(),
             account_id = Empty,
+            body_size = Empty,
         );
 
         if request.method() != Method::GET && request.method() != Method::OPTIONS {
