@@ -1,8 +1,8 @@
 use std::task::{Context, Poll};
 
-use axum::response::IntoResponse;
+use axum::response::{IntoResponse, Response};
 use futures::future::BoxFuture;
-use http::{Request, Response};
+use http::{Request};
 use hyper::{body::HttpBody, Body};
 use tower::{Layer, Service};
 
@@ -12,13 +12,12 @@ pub struct Middleware<S> {
     service: S,
 }
 
-impl<S, ResBody> Service<Request<Body>> for Middleware<S>
+impl<S> Service<Request<Body>> for Middleware<S>
 where
-    S: Service<Request<Body>, Response = Response<ResBody>> + Clone + Send + 'static,
-    ResBody: Default + IntoResponse<Body = ResBody>,
+    S: Service<Request<Body>, Response = Response> + Clone + Send + 'static,
     S::Future: Send,
 {
-    type Response = Response<ResBody>;
+    type Response = Response;
     type Error = S::Error;
     type Future = BoxFuture<'static, Result<Self::Response, Self::Error>>;
 
@@ -36,7 +35,7 @@ where
         Box::pin(async move {
             if let Some(len) = req.body().size_hint().exact() {
                 if len > limit {
-                    let resp_body: ResBody = Default::default();
+                    let resp_body: Response = Default::default();
                     return Ok((http::StatusCode::PAYLOAD_TOO_LARGE, resp_body).into_response());
                 }
             }
