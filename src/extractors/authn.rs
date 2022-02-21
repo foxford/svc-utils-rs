@@ -3,6 +3,7 @@ use std::sync::Arc;
 use axum::{
     async_trait,
     extract::{FromRequest, RequestParts},
+    body::Body,
 };
 use http::StatusCode;
 use svc_agent::{AccountId, AgentId};
@@ -13,10 +14,10 @@ use tracing::{field, Span};
 pub struct Extractor(pub AgentId);
 
 #[async_trait]
-impl FromRequest for Extractor {
+impl FromRequest<Body> for Extractor {
     type Rejection = (StatusCode, &'static str);
 
-    async fn from_request(req: &mut RequestParts) -> Result<Self, Self::Rejection> {
+    async fn from_request(req: &mut RequestParts<Body>) -> Result<Self, Self::Rejection> {
         let authn = req
             .extensions()
             .and_then(|x| x.get::<Arc<AuthnConfig>>())
