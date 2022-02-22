@@ -1,6 +1,6 @@
 [package]
 name = "svc-utils"
-version = "0.1.6"
+version = "0.2.0"
 edition = "2018"
 license = "MIT"
 documentation = "https://docs.rs/svc-utils"
