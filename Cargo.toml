@@ -1,6 +1,6 @@
 [package]
 name = "svc-utils"
-version = "0.2.0"
+version = "0.3.0"
 edition = "2018"
 license = "MIT"
 documentation = "https://docs.rs/svc-utils"
@@ -15,25 +15,25 @@ log-middleware = []
 metrics-middleware = ["once_cell"]
 
 [dependencies]
-axum = "0.4"
+axum = "0.5"
 futures = "0.3"
 http = "0.2"
 hyper = { version = "0.14.15", features = ["server"] }
+once_cell = { version = "1.9", optional = true }
 prometheus = { version = "0.13", default-features = false }
+svc-agent = { version = "0.19.4", optional = true }
+svc-authn = { version = "0.7", features = ["jose"], optional = true }
 tokio = { version = "1.14", features = ["sync"] }
 tower = "0.4"
 tower-http = { version = "0.2.3", features = ["trace"] }
 tracing = "0.1"
-svc-authn = { version = "0.7", features = ["jose"], optional = true }
-svc-agent = { version = "0.19.4", optional = true }
-once_cell = { version = "1.9", optional = true }
 
 [dev-dependencies]
 signal-hook = "0.3"
 signal-hook-tokio = { version = "0.3", features = ["futures-v0_3"] }
 tokio = { version = "1.14", features = ["full"] }
-tracing-subscriber = "0.3"
 tracing-futures = "0.2"
+tracing-subscriber = "0.3"
 
 [[example]]
 name = "http_metrics"
