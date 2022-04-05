@@ -2,8 +2,8 @@ use std::sync::Arc;
 
 use axum::{
     async_trait,
-    extract::{FromRequest, RequestParts},
     body::Body,
+    extract::{FromRequest, RequestParts},
 };
 use http::StatusCode;
 use svc_agent::{AccountId, AgentId};
@@ -20,12 +20,12 @@ impl FromRequest<Body> for Extractor {
     async fn from_request(req: &mut RequestParts<Body>) -> Result<Self, Self::Rejection> {
         let authn = req
             .extensions()
-            .and_then(|x| x.get::<Arc<AuthnConfig>>())
+            .get::<Arc<AuthnConfig>>()
             .ok_or((StatusCode::UNAUTHORIZED, "No authn config"))?;
 
         let auth_header = req
             .headers()
-            .and_then(|x| x.get("Authorization"))
+            .get("Authorization")
             .and_then(|x| x.to_str().ok())
             .and_then(|x| x.get("Bearer ".len()..))
             .ok_or((StatusCode::UNAUTHORIZED, "Invalid authentication"))?;

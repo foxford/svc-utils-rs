@@ -1,13 +1,10 @@
-use std::net::SocketAddr;
-use std::time::Duration;
+use std::{net::SocketAddr, time::Duration};
 
-use axum::{extract, routing, routing::Router, AddExtensionLayer, Server};
+use axum::{extract::Extension, routing, routing::Router, Server};
 use hyper::{Body, Request, Response};
 use prometheus::{Encoder, Registry, TextEncoder};
-use tokio::sync::oneshot;
-use tokio::task::JoinHandle;
+use tokio::{sync::oneshot, task::JoinHandle};
 use tower_http::trace::TraceLayer;
-
 use tracing::{error, field::Empty, info, warn, Span};
 
 /// Http server with graceful shutdown that serves prometheus metrics
@@ -42,7 +39,7 @@ impl MetricsServer {
 
         let app = app
             .route("/metrics", routing::get(metrics_handler_with_registry))
-            .layer(AddExtensionLayer::new(registry));
+            .layer(Extension(registry));
 
         Self::new_(app, bind_addr)
     }
@@ -123,7 +120,7 @@ async fn metrics_handler() -> Response<Body> {
     response
 }
 
-async fn metrics_handler_with_registry(state: extract::Extension<Registry>) -> Response<Body> {
+async fn metrics_handler_with_registry(state: Extension<Registry>) -> Response<Body> {
     let registry = state.0;
     let mut buffer = vec![];
     let encoder = TextEncoder::new();

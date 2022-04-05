@@ -12,6 +12,7 @@ use tracing::{
     info, Span,
 };
 
+#[derive(Default)]
 pub struct LogLayer;
 
 impl LogLayer {

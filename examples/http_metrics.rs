@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use axum::{extract, routing::get, AddExtensionLayer, Router};
+use axum::{extract::Extension, routing::get, Router};
 use futures::StreamExt;
 use prometheus::{IntCounter, IntGauge, Opts, Registry};
 use signal_hook::consts::TERM_SIGNALS;
@@ -51,7 +51,7 @@ async fn main() {
         .route("/", get(root))
         .route("/inc", get(inc))
         .route("/dec", get(dec))
-        .layer(AddExtensionLayer::new(shared_state));
+        .layer(Extension(shared_state));
 
     let mut signals_stream = signal_hook_tokio::Signals::new(TERM_SIGNALS)
         .unwrap()
@@ -73,19 +73,19 @@ async fn main() {
 
 struct State(IntCounter, IntGauge);
 
-async fn root(state: extract::Extension<Arc<State>>) -> &'static str {
+async fn root(state: Extension<Arc<State>>) -> &'static str {
     state.0 .0.inc();
     "Hello world"
 }
 
-async fn inc(state: extract::Extension<Arc<State>>) -> &'static str {
+async fn inc(state: Extension<Arc<State>>) -> &'static str {
     state.0 .0.inc();
     state.0 .1.inc();
 
     "Increased!"
 }
 
-async fn dec(state: extract::Extension<Arc<State>>) -> &'static str {
+async fn dec(state: Extension<Arc<State>>) -> &'static str {
     state.0 .0.inc();
     state.0 .1.dec();
 

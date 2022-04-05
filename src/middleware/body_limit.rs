@@ -2,7 +2,7 @@ use std::task::{Context, Poll};
 
 use axum::response::{IntoResponse, Response};
 use futures::future::BoxFuture;
-use http::{Request};
+use http::Request;
 use hyper::{body::HttpBody, Body};
 use tower::{Layer, Service};
 

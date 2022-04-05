@@ -10,11 +10,15 @@ pub struct Middleware<S> {
     service: S,
 }
 
+#[allow(clippy::declare_interior_mutable_const)]
 const ALLOWED_METHODS: HeaderValue = HeaderValue::from_static("GET, PUT, POST, PATCH, DELETE");
+#[allow(clippy::declare_interior_mutable_const)]
 const ALLOWED_HEADERS: HeaderValue = HeaderValue::from_static(
     "authorization, ulms-app-audience, ulms-scope, ulms-app-version, ulms-app-label, content-type",
 );
+#[allow(clippy::declare_interior_mutable_const)]
 const ALLOW_CREDENTIALS: HeaderValue = HeaderValue::from_static("true");
+#[allow(clippy::declare_interior_mutable_const)]
 const MAX_AGE: HeaderValue = HeaderValue::from_static("3600");
 
 impl<S, ReqBody, ResBody> Service<Request<ReqBody>> for Middleware<S>
