@@ -25,7 +25,7 @@ svc-agent = { version = "0.19.4", optional = true }
 svc-authn = { version = "0.7", features = ["jose"], optional = true }
 tokio = { version = "1.14", features = ["sync"] }
 tower = "0.4"
-tower-http = { version = "0.2.3", features = ["trace"] }
+tower-http = { version = "0.3.1", features = ["trace"] }
 tracing = "0.1"
 
 [dev-dependencies]
