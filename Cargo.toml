@@ -8,7 +8,7 @@ repository = "https://github.com/foxford/svc-utils-rs"
 description = "Bunch of reusable utilities"
 
 [features]
-authn-extractor = ["svc-authn", "svc-agent"]
+authn-extractor = ["svc-authn", "svc-agent", "svc-error"]
 body-limit-middleware = []
 cors-middleware = []
 log-middleware = []
@@ -23,6 +23,7 @@ once_cell = { version = "1.9", optional = true }
 prometheus = { version = "0.13", default-features = false }
 svc-agent = { version = "0.19.4", optional = true }
 svc-authn = { version = "0.7", features = ["jose"], optional = true }
+svc-error = { version = "0.3", optional = true }
 tokio = { version = "1.14", features = ["sync"] }
 tower = "0.4"
 tower-http = { version = "0.2.3", features = ["trace"] }
