@@ -12,6 +12,7 @@ use svc_authn::token::jws_compact::extract::decode_jws_compact_with_config;
 use svc_error::Error;
 use tracing::{field, Span};
 
+/// Extracts `AccountId` from "Authorization: Bearer ..." headers.
 pub struct AccountIdExtractor(pub AccountId);
 
 #[async_trait]
@@ -62,6 +63,10 @@ impl FromRequest<Body> for AccountIdExtractor {
     }
 }
 
+/// Extracts `AgentId`. User should provide 2 headers to make this work:
+///
+/// * "Authorization: Bearer <token>"
+/// * "X-Agent-Label: <label>"
 pub struct AgentIdExtractor(pub AgentId);
 
 #[async_trait]
