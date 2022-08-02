@@ -82,15 +82,15 @@ impl FromRequest<Body> for AgentIdExtractor {
             .and_then(|x| x.to_str().ok())
             .unwrap_or("http");
 
-            // TODO: later missing header will be hard error
-            // .ok_or((
-            //     StatusCode::UNAUTHORIZED,
-            //     Json(Error::new(
-            //         "invalid_agent_label",
-            //         "Invalid agent label",
-            //         StatusCode::UNAUTHORIZED,
-            //     )),
-            // ))?;
+        // TODO: later missing header will be hard error
+        // .ok_or((
+        //     StatusCode::UNAUTHORIZED,
+        //     Json(Error::new(
+        //         "invalid_agent_label",
+        //         "Invalid agent label",
+        //         StatusCode::UNAUTHORIZED,
+        //     )),
+        // ))?;
 
         let agent_id = AgentId::new(agent_label, account_id);
 
