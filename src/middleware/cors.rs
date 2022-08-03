@@ -48,11 +48,8 @@ where
         Box::pin(async move {
             let mut res: Response<ResBody> = inner.call(req).await?;
 
-            match (method, res.status()) {
-                (http::Method::OPTIONS, http::StatusCode::METHOD_NOT_ALLOWED) => {
+            if let (http::Method::OPTIONS, http::StatusCode::METHOD_NOT_ALLOWED) = (method, res.status()) {
                     *res.status_mut() = http::StatusCode::OK;
-                }
-                _ => {}
             }
 
             let h = res.headers_mut();
@@ -69,6 +66,8 @@ where
     }
 }
 
+/// Adds CORS headers and handles OPTIONS requests automatically.
+/// It's ok to implement custom OPTIONS handlers.
 #[derive(Debug, Clone)]
 pub struct MiddlewareLayer;
 
