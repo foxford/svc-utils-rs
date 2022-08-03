@@ -14,12 +14,22 @@ pub struct Middleware<S> {
 const ALLOWED_METHODS: HeaderValue = HeaderValue::from_static("GET, PUT, POST, PATCH, DELETE");
 #[allow(clippy::declare_interior_mutable_const)]
 const ALLOWED_HEADERS: HeaderValue = HeaderValue::from_static(
-    "authorization, ulms-app-audience, ulms-scope, ulms-app-version, ulms-app-label, content-type",
+    "authorization, ulms-app-audience, ulms-scope, ulms-app-version, ulms-app-label, content-type, x-agent-label"
 );
 #[allow(clippy::declare_interior_mutable_const)]
 const ALLOW_CREDENTIALS: HeaderValue = HeaderValue::from_static("true");
 #[allow(clippy::declare_interior_mutable_const)]
 const MAX_AGE: HeaderValue = HeaderValue::from_static("3600");
+
+fn add_cors_headers<T>(res: &mut Response<T>, origin: HeaderValue) {
+    let h = res.headers_mut();
+
+    h.insert(header::ACCESS_CONTROL_ALLOW_METHODS, ALLOWED_METHODS);
+    h.insert(header::ACCESS_CONTROL_ALLOW_ORIGIN, origin);
+    h.insert(header::ACCESS_CONTROL_ALLOW_HEADERS, ALLOWED_HEADERS);
+    h.insert(header::ACCESS_CONTROL_ALLOW_CREDENTIALS, ALLOW_CREDENTIALS);
+    h.insert("Access-Control-Max-Age", MAX_AGE);
+}
 
 impl<S, ReqBody, ResBody> Service<Request<ReqBody>> for Middleware<S>
 where
@@ -40,24 +50,35 @@ where
         // best practice is to clone the inner service like this
         // see https://github.com/tower-rs/tower/issues/547 for details
         let origin = req.headers().get("Origin").map(ToOwned::to_owned);
+        let method = req.method().clone();
+
         let clone = self.service.clone();
         let mut inner = std::mem::replace(&mut self.service, clone);
 
         Box::pin(async move {
             let mut res: Response<ResBody> = inner.call(req).await?;
-            let h = res.headers_mut();
-            h.insert(header::ACCESS_CONTROL_ALLOW_METHODS, ALLOWED_METHODS);
-            if let Some(origin) = origin {
-                h.insert(header::ACCESS_CONTROL_ALLOW_ORIGIN, origin);
+
+            match (method, res.status(), origin) {
+                // we have no defined OPTIONS handler
+                (http::Method::OPTIONS, http::StatusCode::METHOD_NOT_ALLOWED, Some(origin)) => {
+                    *res.status_mut() = http::StatusCode::OK;
+
+                    add_cors_headers(&mut res, origin);
+                }
+                // we have some other request with Origin header
+                (method, _, Some(origin)) if method != http::Method::OPTIONS => {
+                    add_cors_headers(&mut res, origin);
+                }
+                _ => {}
             }
-            h.insert(header::ACCESS_CONTROL_ALLOW_HEADERS, ALLOWED_HEADERS);
-            h.insert(header::ACCESS_CONTROL_ALLOW_CREDENTIALS, ALLOW_CREDENTIALS);
-            h.insert("Access-Control-Max-Age", MAX_AGE);
+
             Ok(res)
         })
     }
 }
 
+/// Adds CORS headers and handles OPTIONS requests automatically.
+/// It's ok to implement custom OPTIONS handlers.
 #[derive(Debug, Clone)]
 pub struct MiddlewareLayer;
 
