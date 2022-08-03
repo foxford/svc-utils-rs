@@ -51,17 +51,18 @@ where
             if let (http::Method::OPTIONS, http::StatusCode::METHOD_NOT_ALLOWED) =
                 (method, res.status())
             {
-                *res.status_mut() = http::StatusCode::OK;
-            }
+                if let Some(origin) = origin {
+                    let h = res.headers_mut();
 
-            let h = res.headers_mut();
-            h.insert(header::ACCESS_CONTROL_ALLOW_METHODS, ALLOWED_METHODS);
-            if let Some(origin) = origin {
-                h.insert(header::ACCESS_CONTROL_ALLOW_ORIGIN, origin);
+                    h.insert(header::ACCESS_CONTROL_ALLOW_METHODS, ALLOWED_METHODS);
+                    h.insert(header::ACCESS_CONTROL_ALLOW_ORIGIN, origin);
+                    h.insert(header::ACCESS_CONTROL_ALLOW_HEADERS, ALLOWED_HEADERS);
+                    h.insert(header::ACCESS_CONTROL_ALLOW_CREDENTIALS, ALLOW_CREDENTIALS);
+                    h.insert("Access-Control-Max-Age", MAX_AGE);
+
+                    *res.status_mut() = http::StatusCode::OK;
+                }
             }
-            h.insert(header::ACCESS_CONTROL_ALLOW_HEADERS, ALLOWED_HEADERS);
-            h.insert(header::ACCESS_CONTROL_ALLOW_CREDENTIALS, ALLOW_CREDENTIALS);
-            h.insert("Access-Control-Max-Age", MAX_AGE);
 
             Ok(res)
         })
