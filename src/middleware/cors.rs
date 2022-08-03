@@ -21,6 +21,16 @@ const ALLOW_CREDENTIALS: HeaderValue = HeaderValue::from_static("true");
 #[allow(clippy::declare_interior_mutable_const)]
 const MAX_AGE: HeaderValue = HeaderValue::from_static("3600");
 
+fn add_cors_headers<T>(res: &mut Response<T>, origin: HeaderValue) {
+    let h = res.headers_mut();
+
+    h.insert(header::ACCESS_CONTROL_ALLOW_METHODS, ALLOWED_METHODS);
+    h.insert(header::ACCESS_CONTROL_ALLOW_ORIGIN, origin);
+    h.insert(header::ACCESS_CONTROL_ALLOW_HEADERS, ALLOWED_HEADERS);
+    h.insert(header::ACCESS_CONTROL_ALLOW_CREDENTIALS, ALLOW_CREDENTIALS);
+    h.insert("Access-Control-Max-Age", MAX_AGE);
+}
+
 impl<S, ReqBody, ResBody> Service<Request<ReqBody>> for Middleware<S>
 where
     S: Service<Request<ReqBody>, Response = Response<ResBody>> + Clone + Send + 'static,
@@ -48,20 +58,18 @@ where
         Box::pin(async move {
             let mut res: Response<ResBody> = inner.call(req).await?;
 
-            if let (http::Method::OPTIONS, http::StatusCode::METHOD_NOT_ALLOWED) =
-                (method, res.status())
-            {
-                if let Some(origin) = origin {
-                    let h = res.headers_mut();
-
-                    h.insert(header::ACCESS_CONTROL_ALLOW_METHODS, ALLOWED_METHODS);
-                    h.insert(header::ACCESS_CONTROL_ALLOW_ORIGIN, origin);
-                    h.insert(header::ACCESS_CONTROL_ALLOW_HEADERS, ALLOWED_HEADERS);
-                    h.insert(header::ACCESS_CONTROL_ALLOW_CREDENTIALS, ALLOW_CREDENTIALS);
-                    h.insert("Access-Control-Max-Age", MAX_AGE);
-
+            match (method, res.status(), origin) {
+                // we have no defined OPTIONS handler
+                (http::Method::OPTIONS, http::StatusCode::METHOD_NOT_ALLOWED, Some(origin)) => {
                     *res.status_mut() = http::StatusCode::OK;
+
+                    add_cors_headers(&mut res, origin);
                 }
+                // we have some other request with Origin header
+                (method, _, Some(origin)) if method != http::Method::OPTIONS => {
+                    add_cors_headers(&mut res, origin);
+                }
+                _ => {}
             }
 
             Ok(res)
