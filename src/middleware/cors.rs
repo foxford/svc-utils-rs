@@ -40,11 +40,21 @@ where
         // best practice is to clone the inner service like this
         // see https://github.com/tower-rs/tower/issues/547 for details
         let origin = req.headers().get("Origin").map(ToOwned::to_owned);
+        let method = req.method().clone();
+
         let clone = self.service.clone();
         let mut inner = std::mem::replace(&mut self.service, clone);
 
         Box::pin(async move {
             let mut res: Response<ResBody> = inner.call(req).await?;
+
+            match (method, res.status()) {
+                (http::Method::OPTIONS, http::StatusCode::METHOD_NOT_ALLOWED) => {
+                    *res.status_mut() = http::StatusCode::OK;
+                }
+                _ => {}
+            }
+
             let h = res.headers_mut();
             h.insert(header::ACCESS_CONTROL_ALLOW_METHODS, ALLOWED_METHODS);
             if let Some(origin) = origin {
@@ -53,6 +63,7 @@ where
             h.insert(header::ACCESS_CONTROL_ALLOW_HEADERS, ALLOWED_HEADERS);
             h.insert(header::ACCESS_CONTROL_ALLOW_CREDENTIALS, ALLOW_CREDENTIALS);
             h.insert("Access-Control-Max-Age", MAX_AGE);
+
             Ok(res)
         })
     }
