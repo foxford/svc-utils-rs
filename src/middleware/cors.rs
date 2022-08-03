@@ -48,8 +48,10 @@ where
         Box::pin(async move {
             let mut res: Response<ResBody> = inner.call(req).await?;
 
-            if let (http::Method::OPTIONS, http::StatusCode::METHOD_NOT_ALLOWED) = (method, res.status()) {
-                    *res.status_mut() = http::StatusCode::OK;
+            if let (http::Method::OPTIONS, http::StatusCode::METHOD_NOT_ALLOWED) =
+                (method, res.status())
+            {
+                *res.status_mut() = http::StatusCode::OK;
             }
 
             let h = res.headers_mut();
