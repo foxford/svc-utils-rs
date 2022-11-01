@@ -110,14 +110,13 @@ async fn metrics_handler() -> Response<Body> {
     let mut buffer = vec![];
     let encoder = TextEncoder::new();
     let metric_families = prometheus::gather();
-    let response = match encoder.encode(&metric_families, &mut buffer) {
+    match encoder.encode(&metric_families, &mut buffer) {
         Ok(_) => Response::builder().status(200).body(buffer.into()).unwrap(),
         Err(err) => {
             warn!("Metrics not gathered: {:?}", err);
             Response::builder().status(500).body(vec![].into()).unwrap()
         }
-    };
-    response
+    }
 }
 
 async fn metrics_handler_with_registry(state: Extension<Registry>) -> Response<Body> {
@@ -125,12 +124,11 @@ async fn metrics_handler_with_registry(state: Extension<Registry>) -> Response<B
     let mut buffer = vec![];
     let encoder = TextEncoder::new();
     let metric_families = registry.gather();
-    let response = match encoder.encode(&metric_families, &mut buffer) {
+    match encoder.encode(&metric_families, &mut buffer) {
         Ok(_) => Response::builder().status(200).body(buffer.into()).unwrap(),
         Err(err) => {
             warn!("Metrics not gathered: {:?}", err);
             Response::builder().status(500).body(vec![].into()).unwrap()
         }
-    };
-    response
+    }
 }
