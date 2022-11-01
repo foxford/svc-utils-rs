@@ -51,6 +51,8 @@ impl MakeSpan<Body> for SpanMaker {
             method = %request.method(),
             account_id = Empty,
             body_size = Empty,
+            kind = Empty,
+            detail = Empty,
         );
 
         if request.method() != Method::GET && request.method() != Method::OPTIONS {
