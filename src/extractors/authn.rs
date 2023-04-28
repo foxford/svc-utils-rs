@@ -3,9 +3,9 @@ use std::sync::Arc;
 use axum::{
     async_trait,
     body::Body,
-    extract::{FromRequest, Json, RequestParts},
+    http::{StatusCode, Request},
+    extract::{FromRequest, Json},
 };
-use http::StatusCode;
 use svc_agent::{AccountId, AgentId};
 use svc_authn::jose::ConfigMap as AuthnConfig;
 use svc_authn::token::jws_compact::extract::decode_jws_compact_with_config;
@@ -16,10 +16,10 @@ use tracing::{field, Span};
 pub struct AccountIdExtractor(pub AccountId);
 
 #[async_trait]
-impl FromRequest<Body> for AccountIdExtractor {
+impl<S> FromRequest<S, Body> for AccountIdExtractor {
     type Rejection = (StatusCode, Json<Error>);
 
-    async fn from_request(req: &mut RequestParts<Body>) -> Result<Self, Self::Rejection> {
+    async fn from_request(req: Request<Body>, _state: &S) -> Result<Self, Self::Rejection> {
         let authn = req.extensions().get::<Arc<AuthnConfig>>().ok_or((
             StatusCode::UNAUTHORIZED,
             Json(Error::new(
@@ -70,17 +70,18 @@ impl FromRequest<Body> for AccountIdExtractor {
 pub struct AgentIdExtractor(pub AgentId);
 
 #[async_trait]
-impl FromRequest<Body> for AgentIdExtractor {
+impl<S: std::marker::Sync> FromRequest<S, Body> for AgentIdExtractor {
     type Rejection = (StatusCode, Json<Error>);
 
-    async fn from_request(req: &mut RequestParts<Body>) -> Result<Self, Self::Rejection> {
-        let AccountIdExtractor(account_id) = AccountIdExtractor::from_request(req).await?;
-
+    async fn from_request(req: Request<Body>, state: &S) -> Result<Self, Self::Rejection> {
         let agent_label = req
             .headers()
             .get("X-Agent-Label")
             .and_then(|x| x.to_str().ok())
-            .unwrap_or("http");
+            .unwrap_or("http")
+            .to_string();
+
+        let AccountIdExtractor(account_id) = AccountIdExtractor::from_request(req, state).await?;
 
         // TODO: later missing header will be hard error
         // .ok_or((
@@ -92,7 +93,7 @@ impl FromRequest<Body> for AgentIdExtractor {
         //     )),
         // ))?;
 
-        let agent_id = AgentId::new(agent_label, account_id);
+        let agent_id = AgentId::new2(agent_label, account_id);
 
         Span::current().record("agent_id", &field::display(&agent_id));
 
