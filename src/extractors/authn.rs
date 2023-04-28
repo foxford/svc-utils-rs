@@ -2,9 +2,8 @@ use std::sync::Arc;
 
 use axum::{
     async_trait,
-    body::Body,
-    http::{StatusCode, Request},
-    extract::{FromRequest, Json},
+    extract::{Extension, FromRequestParts, Json},
+    http::{request::Parts, StatusCode},
 };
 use svc_agent::{AccountId, AgentId};
 use svc_authn::jose::ConfigMap as AuthnConfig;
@@ -16,21 +15,26 @@ use tracing::{field, Span};
 pub struct AccountIdExtractor(pub AccountId);
 
 #[async_trait]
-impl<S> FromRequest<S, Body> for AccountIdExtractor {
+impl<S: Send + Sync> FromRequestParts<S> for AccountIdExtractor {
     type Rejection = (StatusCode, Json<Error>);
 
-    async fn from_request(req: Request<Body>, _state: &S) -> Result<Self, Self::Rejection> {
-        let authn = req.extensions().get::<Arc<AuthnConfig>>().ok_or((
-            StatusCode::UNAUTHORIZED,
-            Json(Error::new(
-                "no_authn_config",
-                "No authn config",
+    async fn from_request_parts(parts: &mut Parts, _state: &S) -> Result<Self, Self::Rejection> {
+        use axum::RequestPartsExt;
+        let Extension(authn) = parts
+            .extract::<Extension<Arc<AuthnConfig>>>()
+            .await
+            .ok()
+            .ok_or((
                 StatusCode::UNAUTHORIZED,
-            )),
-        ))?;
+                Json(Error::new(
+                    "no_authn_config",
+                    "No authn config",
+                    StatusCode::UNAUTHORIZED,
+                )),
+            ))?;
 
-        let auth_header = req
-            .headers()
+        let auth_header = parts
+            .headers
             .get("Authorization")
             .and_then(|x| x.to_str().ok())
             .and_then(|x| x.get("Bearer ".len()..))
@@ -43,7 +47,7 @@ impl<S> FromRequest<S, Body> for AccountIdExtractor {
                 )),
             ))?;
 
-        let claims = decode_jws_compact_with_config::<String>(auth_header, authn)
+        let claims = decode_jws_compact_with_config::<String>(auth_header, &authn)
             .map_err(|_| {
                 (
                     StatusCode::UNAUTHORIZED,
@@ -70,18 +74,19 @@ impl<S> FromRequest<S, Body> for AccountIdExtractor {
 pub struct AgentIdExtractor(pub AgentId);
 
 #[async_trait]
-impl<S: std::marker::Sync> FromRequest<S, Body> for AgentIdExtractor {
+impl<S: Send + Sync> FromRequestParts<S> for AgentIdExtractor {
     type Rejection = (StatusCode, Json<Error>);
 
-    async fn from_request(req: Request<Body>, state: &S) -> Result<Self, Self::Rejection> {
-        let agent_label = req
-            .headers()
+    async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
+        let agent_label = parts
+            .headers
             .get("X-Agent-Label")
             .and_then(|x| x.to_str().ok())
             .unwrap_or("http")
             .to_string();
 
-        let AccountIdExtractor(account_id) = AccountIdExtractor::from_request(req, state).await?;
+        let AccountIdExtractor(account_id) =
+            AccountIdExtractor::from_request_parts(parts, state).await?;
 
         // TODO: later missing header will be hard error
         // .ok_or((
