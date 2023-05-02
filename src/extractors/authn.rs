@@ -98,7 +98,7 @@ impl<S: Send + Sync> FromRequestParts<S> for AgentIdExtractor {
         //     )),
         // ))?;
 
-        let agent_id = AgentId::new2(agent_label, account_id);
+        let agent_id = AgentId::new(agent_label, account_id);
 
         Span::current().record("agent_id", &field::display(&agent_id));
 
