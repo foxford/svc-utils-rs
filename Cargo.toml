@@ -22,7 +22,7 @@ hyper = { version = "0.14.15", features = ["server"] }
 once_cell = { version = "1.9", optional = true }
 prometheus = { version = "0.13", default-features = false }
 svc-agent = { version = "0.19.4", optional = true }
-svc-authn = { version = "0.7", features = ["jose"], optional = true }
+svc-authn = { version = "0.8", features = ["jose"], optional = true }
 svc-error = { version = "0.3", optional = true }
 tokio = { version = "1.14", features = ["sync"] }
 tower = "0.4"
