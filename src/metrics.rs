@@ -58,7 +58,7 @@ impl MetricsServer {
                         query = Empty
                     );
                     if let Some(query) = request.uri().query() {
-                        span.record("query", &query);
+                        span.record("query", query);
                     }
                     span
                 })
