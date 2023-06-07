@@ -48,12 +48,13 @@ impl<S: Send + Sync> FromRequestParts<S> for AccountIdExtractor {
             ))?;
 
         let claims = decode_jws_compact_with_config::<String>(auth_header, &authn)
-            .map_err(|_| {
+            .map_err(|e| {
+                let err = e.to_string();
                 (
                     StatusCode::UNAUTHORIZED,
                     Json(Error::new(
                         "invalid_authentication",
-                        "Invalid authentication",
+                        &err,
                         StatusCode::UNAUTHORIZED,
                     )),
                 )
