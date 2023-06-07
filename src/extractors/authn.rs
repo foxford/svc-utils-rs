@@ -9,7 +9,7 @@ use svc_agent::{AccountId, AgentId};
 use svc_authn::jose::ConfigMap as AuthnConfig;
 use svc_authn::token::jws_compact::extract::decode_jws_compact_with_config;
 use svc_error::Error;
-use tracing::{field, Span};
+use tracing::{field, Span, error};
 
 /// Extracts `AccountId` from "Authorization: Bearer ..." headers.
 pub struct AccountIdExtractor(pub AccountId);
@@ -33,6 +33,7 @@ impl<S: Send + Sync> FromRequestParts<S> for AccountIdExtractor {
                 )),
             ))?;
 
+        error!("Authorization header: {:?}", parts.headers.get("Authorization"));
         let auth_header = parts
             .headers
             .get("Authorization")
@@ -47,6 +48,7 @@ impl<S: Send + Sync> FromRequestParts<S> for AccountIdExtractor {
                 )),
             ))?;
 
+        error!("auth_header: {}", auth_header);
         let claims = decode_jws_compact_with_config::<String>(auth_header, &authn)
             .map_err(|e| {
                 let err = e.to_string();
