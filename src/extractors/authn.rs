@@ -38,22 +38,30 @@ impl<S: Send + Sync> FromRequestParts<S> for AccountIdExtractor {
             .get("Authorization")
             .and_then(|x| x.to_str().ok())
             .and_then(|x| x.get("Bearer ".len()..))
-            .ok_or((
-                StatusCode::UNAUTHORIZED,
-                Json(Error::new(
-                    "invalid_authentication",
-                    "Invalid authentication",
-                    StatusCode::UNAUTHORIZED,
-                )),
-            ))?;
-
-        let claims = decode_jws_compact_with_config::<String>(auth_header, &authn)
+            .ok_or_else(|| {
+                url::form_urlencoded::parse(parts.uri.query().unwrap_or("").as_bytes())
+                    .find(|(key, _)| key == "access_token")
+                    .map(|(_, val)| val)
+            })
             .map_err(|_| {
                 (
                     StatusCode::UNAUTHORIZED,
                     Json(Error::new(
                         "invalid_authentication",
                         "Invalid authentication",
+                        StatusCode::UNAUTHORIZED,
+                    )),
+                )
+            })?;
+
+        let claims = decode_jws_compact_with_config::<String>(auth_header, &authn)
+            .map_err(|e| {
+                let err = e.to_string();
+                (
+                    StatusCode::UNAUTHORIZED,
+                    Json(Error::new(
+                        "invalid_authentication",
+                        &err,
                         StatusCode::UNAUTHORIZED,
                     )),
                 )
