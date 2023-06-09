@@ -19,6 +19,7 @@ axum = "0.6"
 futures = "0.3"
 http = "0.2"
 hyper = { version = "0.14", features = ["server"] }
+url = "2.3"
 once_cell = { version = "1.17", optional = true }
 prometheus = { version = "0.13", default-features = false }
 svc-agent = { version = "0.20", optional = true }

@@ -43,14 +43,16 @@ impl<S: Send + Sync> FromRequestParts<S> for AccountIdExtractor {
                     .find(|(key, _)| key == "access_token")
                     .map(|(_, val)| val)
             })
-            .ok_or((
-                StatusCode::UNAUTHORIZED,
-                Json(Error::new(
-                    "invalid_authentication",
-                    "Invalid authentication",
+            .map_err(|_| {
+                (
                     StatusCode::UNAUTHORIZED,
-                )),
-            ))?;
+                    Json(Error::new(
+                        "invalid_authentication",
+                        "Invalid authentication",
+                        StatusCode::UNAUTHORIZED,
+                    )),
+                )
+            })?;
 
         let claims = decode_jws_compact_with_config::<String>(auth_header, &authn)
             .map_err(|e| {
