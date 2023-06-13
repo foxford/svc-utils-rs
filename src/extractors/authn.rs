@@ -38,7 +38,7 @@ impl<S: Send + Sync> FromRequestParts<S> for AccountIdExtractor {
             .get("Authorization")
             .and_then(|x| x.to_str().ok())
             .and_then(|x| x.get("Bearer ".len()..))
-            .ok_or_else(|| {
+            .unwrap_or_else(|| {
                 url::form_urlencoded::parse(parts.uri.query().unwrap_or("").as_bytes())
                     .find(|(key, _)| key == "access_token")
                     .map(|(_, val)| val)
