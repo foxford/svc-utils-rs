@@ -33,7 +33,7 @@ impl<S: Send + Sync> FromRequestParts<S> for AccountIdExtractor {
                 )),
             ))?;
 
-            let auth_header = parts
+        let auth_header = parts
             .headers
             .get("Authorization")
             .and_then(|x| x.to_str().ok())
@@ -68,7 +68,7 @@ impl<S: Send + Sync> FromRequestParts<S> for AccountIdExtractor {
             )
         })?
         .claims;
-    
+
         let account_id = AccountId::new(claims.subject(), claims.audience());
 
         Span::current().record("account_id", &field::display(&account_id));
