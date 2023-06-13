@@ -19,7 +19,7 @@ axum = "0.6"
 futures = "0.3"
 http = "0.2"
 hyper = { version = "0.14", features = ["server"] }
-once_cell = { version = "1.17", optional = true }
+once_cell = { version = "1.18", optional = true }
 prometheus = { version = "0.13", default-features = false }
 svc-agent = { version = "0.20", optional = true }
 svc-authn = { version = "0.8", features = ["jose"], optional = true }
@@ -28,7 +28,7 @@ tokio = { version = "1.28", features = ["sync"] }
 tower = "0.4"
 tower-http = { version = "0.4", features = ["cors", "trace"] }
 tracing = "0.1"
-url = "2.3"
+url = "2.4"
 
 [dev-dependencies]
 signal-hook = "0.3"
