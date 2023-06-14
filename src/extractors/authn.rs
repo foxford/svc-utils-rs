@@ -7,8 +7,7 @@ use axum::{
 };
 use svc_agent::{AccountId, AgentId};
 use svc_authn::{
-    jose::ConfigMap as AuthnConfig,
-    token::jws_compact::extract::decode_jws_compact_with_config,
+    jose::ConfigMap as AuthnConfig, token::jws_compact::extract::decode_jws_compact_with_config,
 };
 use svc_error::Error;
 use tracing::{field, Span};
