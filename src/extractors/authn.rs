@@ -47,19 +47,19 @@ impl<S: Send + Sync> FromRequestParts<S> for AccountIdExtractor {
             (Some(token), _) => decode_jws_compact_with_config::<String>(token, &authn),
             (_, Some(token)) => decode_jws_compact_with_config::<String>(&token, &authn),
             (None, None) => {
-                let Extension(id) = parts
+                let Extension(application_id) = parts
                     .extract::<Extension<Arc<AccountId>>>()
                     .await
                     .ok()
                     .ok_or((
                         StatusCode::UNAUTHORIZED,
                         Json(Error::new(
-                            "invalid_authentication",
-                            "Invalid authentication",
+                            "no_authentication_token",
+                            "No application account id for anonymous access",
                             StatusCode::UNAUTHORIZED,
                         )),
                     ))?;
-                let audience = id.audience();
+                let audience = application_id.audience();
                 return Ok(Self(AccountId::new("anonymous", audience)));
             }
         }
