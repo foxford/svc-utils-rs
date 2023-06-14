@@ -6,8 +6,9 @@ use axum::{
     http::{request::Parts, StatusCode},
 };
 use svc_agent::{AccountId, AgentId};
-use svc_authn::jose::ConfigMap as AuthnConfig;
-use svc_authn::token::jws_compact::extract::decode_jws_compact_with_config;
+use svc_authn::{
+    jose::ConfigMap as AuthnConfig, token::jws_compact::extract::decode_jws_compact_with_config,
+};
 use svc_error::Error;
 use tracing::{field, Span};
 
@@ -46,14 +47,20 @@ impl<S: Send + Sync> FromRequestParts<S> for AccountIdExtractor {
             (Some(token), _) => decode_jws_compact_with_config::<String>(token, &authn),
             (_, Some(token)) => decode_jws_compact_with_config::<String>(&token, &authn),
             (None, None) => {
-                return Err((
-                    StatusCode::UNAUTHORIZED,
-                    Json(Error::new(
-                        "invalid_authentication",
-                        "Invalid authentication",
+                let Extension(application_id) = parts
+                    .extract::<Extension<Arc<AccountId>>>()
+                    .await
+                    .ok()
+                    .ok_or((
                         StatusCode::UNAUTHORIZED,
-                    )),
-                ))
+                        Json(Error::new(
+                            "no_authentication_token",
+                            "No application account id for anonymous access",
+                            StatusCode::UNAUTHORIZED,
+                        )),
+                    ))?;
+                let audience = application_id.audience();
+                return Ok(Self(AccountId::new("anonymous", audience)));
             }
         }
         .map_err(|e| {
