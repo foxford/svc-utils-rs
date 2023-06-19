@@ -15,7 +15,7 @@ jobs:
       - uses: dtolnay/rust-toolchain@1.70.0
         with:
           components: clippy, rustfmt
-      - uses: Swatinem/rust-cache@v2.4.0
+      - uses: Swatinem/rust-cache@v2.5.0
       - run: cargo check
       - run: cargo fmt --all --check
       - run: cargo clippy --all-features -- -D warnings
