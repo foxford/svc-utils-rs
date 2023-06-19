@@ -15,16 +15,16 @@ log-middleware = []
 metrics-middleware = ["once_cell"]
 
 [dependencies]
-axum = "0.5"
+axum = "0.6"
 futures = "0.3"
 http = "0.2"
 hyper = { version = "0.14.15", features = ["server"] }
 once_cell = { version = "1.9", optional = true }
 prometheus = { version = "0.13", default-features = false }
-svc-agent = { version = "0.19.4", optional = true }
+svc-agent = { git = "https://github.com/foxford/svc-agent-rs", branch = "ULMS-2365/sqlx", optional = true }
 svc-authn = { version = "0.7", features = ["jose"], optional = true }
 svc-error = { version = "0.3", optional = true }
-tokio = { version = "1.14", features = ["sync"] }
+tokio = { version = "1.28", features = ["sync"] }
 tower = "0.4"
 tower-http = { version = "0.2.3", features = ["trace"] }
 tracing = "0.1"
