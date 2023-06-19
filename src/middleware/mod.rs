@@ -2,7 +2,7 @@
 pub use body_limit::BodyLimitLayer;
 
 #[cfg(feature = "cors-middleware")]
-pub use cors::{Middleware as CorsMiddleware, MiddlewareLayer as CorsLayer};
+pub use cors::CorsLayer;
 
 #[cfg(feature = "log-middleware")]
 pub use log::LogLayer;

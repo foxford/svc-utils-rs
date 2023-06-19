@@ -239,6 +239,6 @@ where
 
     fn metered_route(self, path: &str, svc: H) -> Self::Output {
         let handler = MetricsMiddlewareLayer::new(path.to_owned()).layer(svc);
-        self.route(path, handler)
+        self.route_service(path, handler)
     }
 }
