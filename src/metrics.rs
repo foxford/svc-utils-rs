@@ -58,7 +58,8 @@ impl MetricsServer {
                         query = Empty
                     );
                     if let Some(query) = request.uri().query() {
-                        span.record("query", &query);
+                        // clippy in CI doesn't like the simple '&query' here
+                        span.record("query", &tracing::field::display(query));
                     }
                     span
                 })
